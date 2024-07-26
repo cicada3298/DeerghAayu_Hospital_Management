@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import validator from "validator";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -24,7 +25,7 @@ const userSchema = new mongoose.Schema({
     minLength: [10, "Phone number must contain exactly 11 digits"],
     maxLength: [10, "Phone number must contain exactly 11 digits"],
   },
-  AdhaarNo: {
+  adhaarNo: {
     type: String,
     required: true,
     minLength: [12, "Adhaar number must contain exactly 12 digits"],
@@ -41,15 +42,15 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
-    minLength: [8, "Password must contain at least 8 characters"],
+    required: [true, "Password Is Required!"],
+    minLength: [8, "Password Must Contain At Least 8 Characters!"],
+    select: false,
     match: [
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/,
       "Password must be a combination of lowercase, uppercase letter and digits!",
     ],
-    select: false,
   },
-  Role: {
+  role: {
     type: String,
     required: true,
     enum: ["Patient", "Admin", "Doctor"],
@@ -70,4 +71,14 @@ userSchema.pre("save", async function (next) {
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-export const User = mongoose.model("Message", userSchema);
+userSchema.methods.comparePasswords = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.methods.generateJsonWebToken = function () {
+  return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
+    expiresIn: process.env.JWT_EXPIRES,
+  });
+};
+
+export const User = mongoose.model("User", userSchema);
