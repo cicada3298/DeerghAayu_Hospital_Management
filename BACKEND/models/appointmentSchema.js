@@ -1,9 +1,7 @@
 import mongoose from "mongoose";
 import validator from "validator";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 
-const userSchema = new mongoose.Schema({
+const appointmentSchema = new mongoose.Schema({
   firstName: {
     type: String,
     required: true,
@@ -40,45 +38,46 @@ const userSchema = new mongoose.Schema({
     required: true,
     enum: ["Male", "Female", "Transgender", "Prefer not to say"],
   },
-  password: {
+  appointment_date: {
     type: String,
-    required: [true, "Password Is Required!"],
-    minLength: [8, "Password Must Contain At Least 8 Characters!"],
-    select: false,
-    match: [
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/,
-      "Password must be a combination of lowercase, uppercase letter and digits!",
-    ],
-  },
-  role: {
-    type: String,
-    required: true,
-    enum: ["Patient", "Admin", "Doctor"],
+    required: [true, "Appointment Date Is Required!"],
   },
   department: {
     type: String,
+    required: [true, "Department Name Is Required!"],
   },
-  docAvatar: {
-    public_id: String,
-    url: String,
+  doctor: {
+    firstName: {
+      type: String,
+      required: [true, "Doctor Name Is Required!"],
+    },
+    lastName: {
+      type: String,
+      required: [true, "Doctor Name Is Required!"],
+    },
+  },
+  hasVisited: {
+    type: Boolean,
+    default: false,
+  },
+  address: {
+    type: String,
+    required: [true, "Address Is Required!"],
+  },
+  doctorId: {
+    type: mongoose.Schema.ObjectId,
+    required: [true, "Doctor Id Is Invalid!"],
+  },
+  patientId: {
+    type: mongoose.Schema.ObjectId,
+    ref: "User",
+    required: [true, "Patient Id Is Required!"],
+  },
+  status: {
+    type: String,
+    enum: ["Pending", "Accepted", "Rejected"],
+    default: "Pending",
   },
 });
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    next();
-  }
-  this.password = await bcrypt.hash(this.password, 10);
-});
-
-userSchema.methods.comparePasswords = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
-};
-
-userSchema.methods.generateJsonWebToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, {
-    expiresIn: process.env.JWT_EXPIRES,
-  });
-};
-
-export const User = mongoose.model("User", userSchema);
+export const Appointment = mongoose.model("Appointment", appointmentSchema);
