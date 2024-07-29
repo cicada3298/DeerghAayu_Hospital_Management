@@ -124,7 +124,7 @@ const AppointmentForm = () => {
           <div>
             <input
               type="number"
-              placeholder="NIC"
+              placeholder="Adhaar"
               value={adhaarNo}
               onChange={(e) => setAdhaarNo(e.target.value)}
             />
